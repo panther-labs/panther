@@ -41,8 +41,8 @@ const DataModelCardOptions: React.FC<DataModelCardOptionsProps> = ({ dataModel }
         <DropdownItem
           onSelect={() => {
             return showModal({
-              modal: MODALS.DELETE_DATA_MODEL,
-              props: { dataModel },
+              modal: MODALS.DELETE_DATA_MODELS,
+              props: { dataModels: [dataModel] },
             });
           }}
         >

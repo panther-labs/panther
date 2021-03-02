@@ -50,6 +50,7 @@ type SourceIntegrationScanInformation struct {
 }
 
 // SourceIntegrationMetadata is general settings and metadata for an integration.
+//nolint:maligned
 type SourceIntegrationMetadata struct {
 	AWSAccountID       string    `json:"awsAccountId,omitempty"`
 	CreatedAtTime      time.Time `json:"createdAtTime,omitempty"`
@@ -72,10 +73,29 @@ type SourceIntegrationMetadata struct {
 	S3PrefixLogTypes  S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
 	KmsKey            string           `json:"kmsKey,omitempty"`
 	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
+	// Whether Panther should configure the user's bucket notifications.
+	ManagedBucketNotifications bool `json:"managedBucketNotifications"`
+	// This is only needed for the API response, so that the UI can show a warning message
+	// if Panther couldn't setup bucket notifications. Failing to do so doesn't
+	// block any other source operations like saving to the DB.
+	NotificationsConfigurationSucceeded bool `json:"notificationsConfigurationSucceeded"`
 
 	StackName string `json:"stackName,omitempty"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
+
+	// PantherVersion is the version of Panther that the source was created with.
+	PantherVersion string `json:"pantherVersion,omitempty"`
+}
+
+type ManagedS3Resources struct {
+	// Storing the topic's ARN
+	// - saves us from an extra network call when checking whether Panther managed to create the topic
+	// - we don't ever delete it from AWS, so we need to show to the user the exact resource that will be kept.
+	TopicARN *string `json:"topicARN"`
+	// Only the IDs from configurations that Panther manages. The bucket may have
+	// other user-created topic configurations as well.
+	TopicConfigurationIDs []string `json:"topicConfigIds"`
 }
 
 // S3PrefixLogtypesMapping contains the logtypes Panther should parse for this s3 prefix.
@@ -170,6 +190,12 @@ type SourceIntegrationHealth struct {
 	ProcessingRoleStatus SourceIntegrationItemStatus `json:"processingRoleStatus,omitempty"`
 	S3BucketStatus       SourceIntegrationItemStatus `json:"s3BucketStatus,omitempty"`
 	KMSKeyStatus         SourceIntegrationItemStatus `json:"kmsKeyStatus,omitempty"`
+	// GetObject check is not available to sources created in Panther<1.16
+	GetObjectStatus *SourceIntegrationItemStatus `json:"getObjectStatus,omitempty"`
+	// BucketNotificationsStatus is the result of checking the bucket's notifications configuration.
+	// It is populated only if the log processing role has the s3:GetBucketNotification permission. This is
+	// added to our provided CFN template if user opts for Panther-managed bucket notifications.
+	BucketNotificationsStatus *SourceIntegrationItemStatus `json:"bucketNotificationsStatus,omitempty"`
 
 	// Checks for Sqs integrations
 	SqsStatus SourceIntegrationItemStatus `json:"sqsStatus"`

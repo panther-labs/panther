@@ -32,13 +32,35 @@ import (
 )
 
 func (API) ListDetections(input *models.ListDetectionsInput) *events.APIGatewayProxyResponse {
+	items, compliance, err := handleListItems(input)
+	if err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body: err.Error(), StatusCode: http.StatusInternalServerError}
+	}
+	// Sort and page
+	sortItems(items, input.SortBy, input.SortDir, nil)
+	var paging models.Paging
+	paging, items = pageItems(items, input.Page, input.PageSize)
+	// Convert to output struct
+	result := models.ListDetectionsOutput{
+		Detections: make([]models.Detection, 0, len(items)),
+		Paging:     paging,
+	}
+	for _, item := range items {
+		status := compliance[item.ID].Status
+		result.Detections = append(result.Detections, *item.Detection(status))
+	}
+
+	return gatewayapi.MarshalResponse(&result, http.StatusOK)
+}
+
+func handleListItems(input *models.ListDetectionsInput) ([]tableItem, map[string]complianceStatus, error) {
 	projectComplianceStatus := stdDetectionListInput(input)
 
 	// Scan dynamo
 	scanInput, err := detectionScanInput(input)
 	if err != nil {
-		return &events.APIGatewayProxyResponse{
-			Body: err.Error(), StatusCode: http.StatusInternalServerError}
+		return nil, nil, err
 	}
 
 	var items []tableItem
@@ -64,25 +86,13 @@ func (API) ListDetections(input *models.ListDetectionsInput) *events.APIGatewayP
 	})
 	if err != nil {
 		zap.L().Error("failed to scan detections", zap.Error(err))
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	}
-
-	// Sort and page
-	sortItems(items, input.SortBy, input.SortDir, nil)
-	var paging models.Paging
-	paging, items = pageItems(items, input.Page, input.PageSize)
-
-	// Convert to output struct
-	result := models.ListDetectionsOutput{
-		Detections: make([]models.Detection, 0, len(items)),
-		Paging:     paging,
+		return nil, nil, err
 	}
 	for _, item := range items {
 		status := compliance[item.ID].Status
-		result.Detections = append(result.Detections, *item.Detection(status))
+		item.Detection(status)
 	}
-
-	return gatewayapi.MarshalResponse(&result, http.StatusOK)
+	return items, compliance, nil
 }
 
 // Set defaults and standardize input request
@@ -157,6 +167,7 @@ func detectionScanInput(input *models.ListDetectionsInput) (*dynamodb.ScanInput,
 	listFilters := pythonFilters{
 		CreatedBy:      input.CreatedBy,
 		Enabled:        input.Enabled,
+		IDs:            input.IDs,
 		InitialSet:     input.InitialSet,
 		LastModifiedBy: input.LastModifiedBy,
 		NameContains:   input.NameContains,

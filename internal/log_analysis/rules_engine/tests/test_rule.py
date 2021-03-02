@@ -98,19 +98,19 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(100, rule.rule_dedup_period_mins)
 
         expected_rule = RuleResult(matched=True, dedup_output='defaultDedupString:test_rule_matches')
-        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_rule_doesnt_match(self) -> None:
         rule_body = 'def rule(event):\n\treturn False'
         rule = Rule({'id': 'test_rule_doesnt_match', 'body': rule_body, 'versionId': 'versionId'})
         expected_rule = RuleResult(matched=False)
-        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_rule_with_dedup(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "testdedup"'
         rule = Rule({'id': 'test_rule_with_dedup', 'body': rule_body, 'versionId': 'versionId'})
         expected_rule = RuleResult(matched=True, dedup_output='testdedup')
-        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_restrict_dedup_size(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "".join("a" for i in range({}))'. \
@@ -119,7 +119,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
 
         expected_dedup_string_prefix = ''.join('a' for _ in range(MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)))
         expected_rule = RuleResult(matched=True, dedup_output=expected_dedup_string_prefix + TRUNCATED_STRING_SUFFIX)
-        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_restrict_title_size(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\n' \
@@ -130,19 +130,19 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
 
         expected_title_string_prefix = ''.join('a' for _ in range(MAX_GENERATED_FIELD_SIZE - len(TRUNCATED_STRING_SUFFIX)))
         expected_rule = RuleResult(matched=True, dedup_output='test', title_output=expected_title_string_prefix + TRUNCATED_STRING_SUFFIX)
-        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_empty_dedup_result_to_default(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn ""'
         rule = Rule({'id': 'test_empty_dedup_result_to_default', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_rule = RuleResult(matched=True, dedup_output='defaultDedupString:test_empty_dedup_result_to_default')
-        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_rule_throws_exception(self) -> None:
         rule_body = 'def rule(event):\n\traise Exception("test")'
         rule = Rule({'id': 'test_rule_throws_exception', 'body': rule_body, 'versionId': 'versionId'})
-        rule_result = rule.run(PantherEvent({}, None))
+        rule_result = rule.run(PantherEvent({}, None), {}, {})
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_output)
         self.assertIsNotNone(rule_result.rule_exception)
@@ -150,7 +150,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
     def test_invalid_python_syntax(self) -> None:
         rule_body = 'def rule(test):this is invalid python syntax'
         rule = Rule({'id': 'test_invalid_python_syntax', 'body': rule_body, 'versionId': 'versionId'})
-        rule_result = rule.run(PantherEvent({}, None))
+        rule_result = rule.run(PantherEvent({}, None), {}, {})
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_output)
         self.assertIsNone(rule_result.rule_exception)
@@ -163,7 +163,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
     def test_rule_invalid_rule_return(self) -> None:
         rule_body = 'def rule(event):\n\treturn "test"'
         rule = Rule({'id': 'test_rule_invalid_rule_return', 'body': rule_body, 'versionId': 'versionId'})
-        rule_result = rule.run(PantherEvent({}, None))
+        rule_result = rule.run(PantherEvent({}, None), {}, {})
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_output)
         self.assertTrue(rule_result.errored)
@@ -177,13 +177,13 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         rule = Rule({'id': 'test_dedup_throws_exception', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_rule = RuleResult(matched=True, dedup_output='defaultDedupString:test_dedup_throws_exception')
-        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_dedup_exception_batch_mode(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\traise Exception("test")'
         rule = Rule({'id': 'test_dedup_throws_exception', 'body': rule_body, 'versionId': 'versionId'})
 
-        actual = rule.run(PantherEvent({}, None), batch_mode=False)
+        actual = rule.run(PantherEvent({}, None), {}, {}, batch_mode=False)
 
         self.assertTrue(actual.matched)
         self.assertIsNotNone(actual.dedup_exception)
@@ -194,21 +194,21 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         rule = Rule({'id': 'test_rule_invalid_dedup_return', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_rule = RuleResult(matched=True, dedup_output='defaultDedupString:test_rule_invalid_dedup_return')
-        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_rule, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_rule_dedup_returns_empty_string(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn ""'
         rule = Rule({'id': 'test_rule_dedup_returns_empty_string', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_result = RuleResult(matched=True, dedup_output='defaultDedupString:test_rule_dedup_returns_empty_string')
-        self.assertEqual(rule.run(PantherEvent({}, None)), expected_result)
+        self.assertEqual(rule.run(PantherEvent({}, None), {}, {}), expected_result)
 
     def test_rule_matches_with_title_without_dedup(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn "title"'
         rule = Rule({'id': 'test_rule_matches_with_title', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_result = RuleResult(matched=True, dedup_output='title', title_output='title')
-        self.assertEqual(rule.run(PantherEvent({}, None)), expected_result)
+        self.assertEqual(rule.run(PantherEvent({}, None), {}, {}), expected_result)
 
     def test_rule_title_throws_exception(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\traise Exception("test")'
@@ -219,7 +219,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             dedup_output='test_rule_title_throws_exception',
             title_output='test_rule_title_throws_exception',
         )
-        self.assertEqual(rule.run(PantherEvent({}, None)), expected_result)
+        self.assertEqual(rule.run(PantherEvent({}, None), {}, {}), expected_result)
 
     def test_rule_invalid_title_return(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn {}'
@@ -228,14 +228,14 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_result = RuleResult(
             matched=True, dedup_output='test_rule_invalid_title_return', title_output='test_rule_invalid_title_return'
         )
-        self.assertEqual(rule.run(PantherEvent({}, None)), expected_result)
+        self.assertEqual(rule.run(PantherEvent({}, None), {}, {}), expected_result)
 
     def test_rule_title_returns_empty_string(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn ""'
         rule = Rule({'id': 'test_rule_title_returns_empty_string', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_result = RuleResult(matched=True, dedup_output='defaultDedupString:test_rule_title_returns_empty_string', title_output='')
-        self.assertEqual(expected_result, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_result, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_alert_context(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef alert_context(event):\n\treturn {"string": "string", "int": 1, "nested": {}}'
@@ -246,7 +246,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             dedup_output='defaultDedupString:test_alert_context',
             alert_context='{"string": "string", "int": 1, "nested": {}}'
         )
-        self.assertEqual(expected_result, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_result, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_alert_context_invalid_return_value(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef alert_context(event):\n\treturn ""'
@@ -261,7 +261,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_result = RuleResult(
             matched=True, dedup_output='defaultDedupString:test_alert_context_invalid_return_value', alert_context=expected_alert_context
         )
-        self.assertEqual(expected_result, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_result, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_alert_context_too_big(self) -> None:
         # Function should generate alert_context exceeding limit
@@ -278,7 +278,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_result = RuleResult(
             matched=True, dedup_output='defaultDedupString:test_alert_context_too_big', alert_context=expected_alert_context
         )
-        self.assertEqual(expected_result, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_result, rule.run(PantherEvent({}, None), {}, {}))
 
     def test_alert_context_immutable_event(self) -> None:
         alert_context_function = 'def alert_context(event):\n' \
@@ -292,7 +292,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_result = RuleResult(
             matched=True, dedup_output='defaultDedupString:test_alert_context_immutable_event', alert_context=expected_alert_context
         )
-        self.assertEqual(expected_result, rule.run(PantherEvent(event, None)))
+        self.assertEqual(expected_result, rule.run(PantherEvent(event, None), {}, {}))
 
     def test_alert_context_returns_full_event(self) -> None:
         alert_context_function = 'def alert_context(event):\n\treturn event'
@@ -304,7 +304,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_result = RuleResult(
             matched=True, dedup_output='defaultDedupString:test_alert_context_returns_full_event', alert_context=expected_alert_context
         )
-        self.assertEqual(expected_result, rule.run(PantherEvent(event, None)))
+        self.assertEqual(expected_result, rule.run(PantherEvent(event, None), {}, {}))
 
     # Generated Fields Tests
     def test_rule_with_all_generated_fields(self) -> None:
@@ -329,7 +329,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             runbook_output='test runbook',
             destinations_output=[]
         )
-        self.assertEqual(expected_result, rule.run(PantherEvent({}, None)))
+        self.assertEqual(expected_result, rule.run(PantherEvent({}, None), {}, {}, batch_mode=False))
 
     def test_rule_with_invalid_severity(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\n' \
@@ -345,7 +345,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             dedup_output='test_rule_with_invalid_severity',
             severity_output="INFO",
         )
-        result = rule.run(PantherEvent({}, None))
+        result = rule.run(PantherEvent({}, None), {}, {})
         self.assertEqual(expected_result, result)
 
     def test_rule_with_valid_severity_case_insensitive(self) -> None:
@@ -362,5 +362,29 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             dedup_output='test_rule_with_valid_severity_case_insensitive',
             severity_output="CRITICAL",
         )
-        result = rule.run(PantherEvent({}, None))
+        result = rule.run(PantherEvent({}, None), {}, {})
         self.assertEqual(expected_result, result)
+
+    def test_rule_with_invalid_destinations_type(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\n' \
+                    'def alert_context(event):\n\treturn {}\n' \
+                    'def title(event):\n\treturn "test_rule_with_valid_severity_case_insensitive"\n' \
+                    'def severity(event):\n\treturn "cRiTiCaL"\n' \
+                    'def destinations(event):\n\treturn "bad input"\n'
+        rule = Rule({'id': 'test_rule_with_valid_severity_case_insensitive', 'body': rule_body, 'versionId': 'versionId'})
+
+        expected_result = RuleResult(
+            matched=True,
+            alert_context='{}',
+            title_output='test_rule_with_valid_severity_case_insensitive',
+            dedup_output='test_rule_with_valid_severity_case_insensitive',
+            severity_output="CRITICAL",
+            destinations_output=None,
+            destinations_exception=Exception(
+                'rule [{}] function [{}] returned [{}], expected a list'.format(rule.rule_id, 'destinations', 'str')
+            )
+        )
+        result = rule.run(PantherEvent({}, None), {}, {}, batch_mode=False)
+        self.assertEqual(str(expected_result), str(result))
+        self.assertTrue(result.errored)
+        self.assertIsNotNone(result.destinations_exception)

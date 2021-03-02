@@ -50,7 +50,7 @@ describe('ListDataModels', () => {
     expect(loadingBlocks.length).toBeGreaterThan(1);
   });
 
-  it('renders a fallback when no custom sources are present', async () => {
+  it('renders a fallback when no data models are present', async () => {
     const mocks = [
       mockListDataModels({
         variables: { input: {} },
@@ -78,7 +78,7 @@ describe('ListDataModels', () => {
     expect(await findByText('Test Error')).toBeInTheDocument();
   });
 
-  it('renders a list of custom schemas', async () => {
+  it('renders a list of data models', async () => {
     const dataModels = [
       buildDataModel({ displayName: 'Data.Model.1', id: '1' }),
       buildDataModel({ displayName: 'Data.Model.2', id: '2' }),
@@ -96,7 +96,7 @@ describe('ListDataModels', () => {
     expect(await findByText(dataModels[1].displayName)).toBeInTheDocument();
   });
 
-  it('removes a custom schema upon successful deletion', async () => {
+  it('removes a data model upon successful deletion', async () => {
     const dataModels = [
       buildDataModel({ displayName: 'Data.Model.1', id: '1' }),
       buildDataModel({ displayName: 'Data.Model.2', id: '2' }),
@@ -442,7 +442,7 @@ describe('ListDataModels', () => {
     const paramsWithTextFilter = `${initialParams}&nameContains=test`;
     expect(parseParams(history.location.search)).toEqual(parseParams(paramsWithTextFilter));
 
-    // Expect the API request to have fired and a new alert to have returned (verifies API execution)
+    // Expect the API request to have fired and a new data model to have returned (verifies API execution)
     await findByText('test.Data.Model');
 
     /* ****************** */
@@ -462,7 +462,7 @@ describe('ListDataModels', () => {
     const paramsWithSortingAndTextFilter = `${paramsWithTextFilter}&sortBy=${ListDataModelsSortFieldsEnum.LastModified}&sortDir=${SortDirEnum.Descending}`;
     expect(parseParams(history.location.search)).toEqual(parseParams(paramsWithSortingAndTextFilter)); // prettier-ignore
 
-    // Expect the API request to have fired and a new alert to have returned (verifies API execution)
+    // Expect the API request to have fired and a new data model to have returned (verifies API execution)
     await findByText('sorted.test.Data.Model');
 
     // Verify that the filters inside the Dropdown are left intact
@@ -470,5 +470,126 @@ describe('ListDataModels', () => {
     const withinDropdown = within(await findByTestId('dropdown-data-model-listing-filters'));
     expect(withinDropdown.getByText(mockedLogType)).toBeTruthy();
     expect(withinDropdown.getAllByLabelText('Enabled')[0]).toHaveValue('Yes');
+  });
+
+  it('can select and delete multiple data models', async () => {
+    const dataModels = [
+      buildDataModel({ displayName: 'Data.Model.1', id: '1' }),
+      buildDataModel({ displayName: 'Data.Model.2', id: '2' }),
+      buildDataModel({ displayName: 'Data.Model.3', id: '3' }),
+    ];
+    const dataModelsToDelete = [dataModels[0], dataModels[1]];
+
+    const mocks = [
+      mockListDataModels({
+        variables: { input: {} },
+        data: {
+          listDataModels: buildListDataModelsResponse({
+            models: dataModels,
+          }),
+        },
+      }),
+      mockDeleteDataModel({
+        variables: {
+          input: { dataModels: dataModelsToDelete.map(m => ({ id: m.id })) },
+        },
+        data: { deleteDataModel: true },
+      }),
+    ];
+
+    const { getByText, findByAriaLabel, getAllByAriaLabel, getByAriaLabel, queryByText } = render(
+      <ListDataModels />,
+      {
+        mocks,
+      }
+    );
+
+    // Check that select all checkbox is present
+    expect(await findByAriaLabel('select all')).toBeInTheDocument();
+
+    // Check that data models and checkboxes are rendered
+    dataModels.forEach(dm => {
+      expect(getByText(dm.displayName)).toBeInTheDocument();
+    });
+    expect(getAllByAriaLabel(`select item`)).toHaveLength(dataModels.length);
+
+    // Single select all 3 Data Models
+    getAllByAriaLabel(`select item`).forEach(dm => fireClickAndMouseEvents(dm));
+
+    // Deselect third data model
+    const checkedCheckboxForDataModel = getAllByAriaLabel(`unselect item`)[2];
+    fireClickAndMouseEvents(checkedCheckboxForDataModel);
+    expect(getByText('2 Selected')).toBeInTheDocument();
+    expect(getAllByAriaLabel(`unselect item`)).toHaveLength(2);
+
+    const massDeleteButton = getByAriaLabel('Delete selected Data Models');
+
+    // Mass delete the selected data models
+    fireClickAndMouseEvents(massDeleteButton);
+
+    fireClickAndMouseEvents(getByText('Delete'));
+    fireClickAndMouseEvents(getByText('Confirm'));
+
+    await waitMs(1);
+    dataModelsToDelete.forEach(dm => expect(queryByText(dm.displayName)).not.toBeInTheDocument());
+  });
+
+  it('can select and delete all data models', async () => {
+    const dataModels = [
+      buildDataModel({ displayName: 'Data.Model.1', id: '1' }),
+      buildDataModel({ displayName: 'Data.Model.2', id: '2' }),
+      buildDataModel({ displayName: 'Data.Model.3', id: '3' }),
+    ];
+
+    const mocks = [
+      mockListDataModels({
+        variables: { input: {} },
+        data: {
+          listDataModels: buildListDataModelsResponse({
+            models: dataModels,
+          }),
+        },
+      }),
+      mockDeleteDataModel({
+        variables: {
+          input: { dataModels: dataModels.map(m => ({ id: m.id })) },
+        },
+        data: { deleteDataModel: true },
+      }),
+    ];
+
+    const { getByText, findByAriaLabel, getAllByAriaLabel, getByAriaLabel, queryByText } = render(
+      <ListDataModels />,
+      {
+        mocks,
+      }
+    );
+
+    // Check that select all checkbox is present
+    const selectAll = await findByAriaLabel('select all');
+
+    // Check that data models and checkboxes are rendered
+    dataModels.forEach(dm => {
+      expect(getByText(dm.displayName)).toBeInTheDocument();
+    });
+    expect(getAllByAriaLabel(`select item`)).toHaveLength(dataModels.length);
+
+    // Select all data models
+    fireClickAndMouseEvents(selectAll);
+    expect(getByText('3 Selected')).toBeInTheDocument();
+
+    // Check that all data models are selected
+    expect(getAllByAriaLabel(`unselect item`)).toHaveLength(dataModels.length);
+
+    const massDeleteButton = getByAriaLabel('Delete selected Data Models');
+
+    // Mass delete the selected data models
+    fireClickAndMouseEvents(massDeleteButton);
+
+    fireClickAndMouseEvents(getByText('Delete'));
+    fireClickAndMouseEvents(getByText('Confirm'));
+
+    await waitMs(1);
+    dataModels.forEach(dm => expect(queryByText(dm.displayName)).not.toBeInTheDocument());
   });
 });

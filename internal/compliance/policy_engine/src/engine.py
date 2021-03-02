@@ -17,15 +17,21 @@
 import json
 import sys
 from typing import Any, Dict
+from unittest.mock import MagicMock
 
 from .policy import PolicySet
 
 
 def analyze(data: Dict[str, Any]) -> Dict[str, Any]:
     """Run the Python analysis"""
-    policy_set = PolicySet(data['policies'])
-    result = {'resources': [policy_set.analyze(r) for r in data['resources']]}
-    return result
+    policy_set = PolicySet(data["policies"])
+    analysis_results = list()
+    for resource in data["resources"]:
+        event_mocks = dict()
+        if resource.get("mocks"):
+            event_mocks = {k: MagicMock(return_value=v) for k, v in resource["mocks"].items()}
+        analysis_results.append(policy_set.analyze(resource, event_mocks))
+    return {"resources": analysis_results}
 
 
 def main() -> None:
@@ -34,8 +40,8 @@ def main() -> None:
     result = analyze(process_input)
 
     # Print the json response, which should be faster than going to disk.
-    print('\n' + json.dumps(result, separators=(',', ':')))
+    print("\n" + json.dumps(result, separators=(",", ":")))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()  # pragma: no cover

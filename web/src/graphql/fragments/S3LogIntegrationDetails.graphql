@@ -13,6 +13,8 @@ fragment S3LogIntegrationDetails on S3LogIntegration {
     logTypes
   }
   stackName
+  managedBucketNotifications
+  notificationsConfigurationSucceeded
   health {
     processingRoleStatus {
       ...IntegrationItemHealthDetails
@@ -21,6 +23,12 @@ fragment S3LogIntegrationDetails on S3LogIntegration {
       ...IntegrationItemHealthDetails
     }
     kmsKeyStatus {
+      ...IntegrationItemHealthDetails
+    }
+    getObjectStatus {
+      ...IntegrationItemHealthDetails
+    }
+    bucketNotificationsStatus {
       ...IntegrationItemHealthDetails
     }
   }

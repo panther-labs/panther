@@ -3,10 +3,11 @@ module github.com/panther-labs/panther
 go 1.15
 
 require (
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/anyascii/go v0.1.7
 	github.com/aws-cloudformation/rain v1.1.1
 	github.com/aws/aws-lambda-go v1.20.0
-	github.com/aws/aws-sdk-go v1.35.34
+	github.com/aws/aws-sdk-go v1.37.8
 	github.com/aws/aws-sdk-go-v2 v1.1.0
 	github.com/aws/aws-sdk-go-v2/config v1.1.0
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.0.1
@@ -25,6 +26,7 @@ require (
 	github.com/google/gofuzz v1.0.0
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/go-cleanhttp v0.5.1
+	github.com/hashicorp/go-version v1.2.1
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/iancoleman/strcase v0.1.3
 	github.com/influxdata/go-syslog/v3 v3.0.0

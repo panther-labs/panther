@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Img, Icon, Link, Divider } from 'pouncejs';
+import { Box, Flex, Img, Icon, Link, Divider, IconProps } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherLogo from 'Assets/panther-plain-logo.svg';
@@ -31,13 +31,26 @@ import {
   SettingsNavigation,
   ComplianceNavigation,
   LogAnalysisNavigation,
+  AnalysisNavigationLinks,
+  IntegrationsNavigation,
 } from './SecondaryNavigations';
 
 const COMPLIANCE_NAV_KEY = 'compliance';
 const LOG_ANALYSIS_NAV_KEY = 'logAnalysis';
+const INTEGRATIONS_NAV_KEY = 'integrations';
 const SETTINGS_NAV_KEY = 'settings';
 
-type NavKeys = typeof COMPLIANCE_NAV_KEY | typeof LOG_ANALYSIS_NAV_KEY | typeof SETTINGS_NAV_KEY;
+export type NavigationLinks = {
+  to: string;
+  icon: IconProps['type'];
+  label: string;
+};
+
+type NavKeys =
+  | typeof COMPLIANCE_NAV_KEY
+  | typeof LOG_ANALYSIS_NAV_KEY
+  | typeof SETTINGS_NAV_KEY
+  | typeof INTEGRATIONS_NAV_KEY;
 
 const Navigation = () => {
   const {
@@ -51,16 +64,20 @@ const Navigation = () => {
   // initial value of `null` which would instantly be updated from the code in `React.useEffect`
   const getSecondaryNavKey = () => {
     const isCompliancePage = pathname.includes(urls.compliance.home());
-    const isLogAnalysisPage =
-      pathname.includes(urls.logAnalysis.home()) &&
-      !pathname.includes(urls.logAnalysis.alerts.list());
+    const isUnderAnalysisNav = AnalysisNavigationLinks.some(navLinks =>
+      pathname.includes(navLinks.to)
+    );
     const isSettingsPage = pathname.includes(urls.settings.home());
+    const isIntegrationsPage = pathname.includes(urls.integrations.home());
 
     if (isCompliancePage) {
       return COMPLIANCE_NAV_KEY;
     }
-    if (isLogAnalysisPage) {
+    if (isUnderAnalysisNav) {
       return LOG_ANALYSIS_NAV_KEY;
+    }
+    if (isIntegrationsPage) {
+      return INTEGRATIONS_NAV_KEY;
     }
     if (isSettingsPage) {
       return SETTINGS_NAV_KEY;
@@ -76,6 +93,7 @@ const Navigation = () => {
 
   const isComplianceNavigationActive = secondaryNav === COMPLIANCE_NAV_KEY;
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
+  const isIntegrationsNavigationActive = secondaryNav === INTEGRATIONS_NAV_KEY;
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
 
   return (
@@ -139,6 +157,18 @@ const Navigation = () => {
               }
             >
               <ComplianceNavigation />
+            </NavGroup>
+          </Box>
+          <Box as="li" mb={2}>
+            <NavGroup
+              active={isIntegrationsNavigationActive}
+              icon="integrations"
+              label="Integrations"
+              onSelect={() =>
+                setSecondaryNav(isIntegrationsNavigationActive ? null : INTEGRATIONS_NAV_KEY)
+              }
+            >
+              <IntegrationsNavigation />
             </NavGroup>
           </Box>
           <Box as="li" mb={2}>

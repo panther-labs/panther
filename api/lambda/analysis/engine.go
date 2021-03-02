@@ -33,9 +33,10 @@ type Policy struct {
 
 // Resource is a subset of the resource fields needed for analysis.
 type Resource struct {
-	Attributes interface{} `json:"attributes"`
-	ID         string      `json:"id"`
-	Type       string      `json:"type"`
+	Attributes interface{}       `json:"attributes"`
+	ID         string            `json:"id"`
+	Type       string            `json:"type"`
+	Mocks      map[string]string `json:"mocks"`
 }
 
 // PolicyEngineOutput is the response format returned by the panther-policy-engine Lambda function.
@@ -74,8 +75,9 @@ type Rule struct {
 
 // Event is a security log to be analyzed, e.g. a  CloudTrail event.
 type Event struct {
-	Data interface{} `json:"data"`
-	ID   string      `json:"id"`
+	Data  interface{}       `json:"data"`
+	ID    string            `json:"id"`
+	Mocks map[string]string `json:"mocks"`
 }
 
 // RulesEngineOutput is the response returned when invoking in log analysis mode.

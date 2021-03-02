@@ -22,7 +22,9 @@ import (
 	"reflect"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
@@ -58,5 +60,75 @@ func TestArrayIndicators(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(1, len(goFields))
 	assert.Equal(reflect.TypeOf([]null.String{}), goFields[0].Type)
-	assert.Equal(`json:"remote_ips,omitempty" panther:"ip" description:"remote ip addresses"`, string(goFields[0].Tag))
+	assert.Equal(`json:"remote_ips,omitempty"  panther:"ip" description:"remote ip addresses"`, string(goFields[0].Tag))
+}
+
+func TestAllowDeny(t *testing.T) {
+	validate := validator.New()
+	null.RegisterValidators(validate)
+	assert := require.New(t)
+	val, err := Resolve(&Schema{
+		Fields: []FieldSchema{
+			{
+				Name: "foo",
+				ValueSchema: ValueSchema{
+					Type: TypeString,
+					Validate: &Validation{
+						Allow: []string{"Foo", "Foo|Bar", `"Foo"`, "`Foo`", "Bar,Baz", "Φου"},
+					},
+				},
+			},
+		},
+	})
+	assert.NoError(err)
+	typ, err := val.GoType()
+	assert.NoError(err)
+	typ = typ.Elem()
+
+	{
+		x := reflect.New(typ).Interface()
+		assert.NoError(jsoniter.UnmarshalFromString(`{"foo":"Bar"}`, x))
+		assert.Error(validate.Struct(x), "Bar is denied")
+	}
+	{
+		x := reflect.New(typ).Interface()
+		assert.NoError(jsoniter.UnmarshalFromString(`{"foo":"Μπαρ"}`, x))
+		assert.Error(validate.Struct(x), "Μπαρ is denied")
+	}
+	{
+		x := reflect.New(typ).Interface()
+		assert.NoError(jsoniter.UnmarshalFromString(`{"foo":"Foo"}`, x))
+		err := validate.Struct(x)
+		assert.NoError(err, "Foo passes")
+	}
+	{
+		x := reflect.New(typ).Interface()
+		assert.NoError(jsoniter.UnmarshalFromString(`{"foo":"Φου"}`, x))
+		err := validate.Struct(x)
+		assert.NoError(err, "Φου passes")
+	}
+	{
+		x := reflect.New(typ).Interface()
+		assert.NoError(jsoniter.UnmarshalFromString(`{"foo":"Foo|Bar"}`, x))
+		err := validate.Struct(x)
+		assert.NoError(err, "Foo|Bar allowed")
+	}
+	{
+		x := reflect.New(typ).Interface()
+		assert.NoError(jsoniter.UnmarshalFromString(`{"foo":"Bar,Baz"}`, x))
+		err := validate.Struct(x)
+		assert.NoError(err, "Bar,Baz allowed")
+	}
+	{
+		x := reflect.New(typ).Interface()
+		assert.NoError(jsoniter.UnmarshalFromString("{\"foo\":\"`Foo`\"}", x))
+		err := validate.Struct(x)
+		assert.NoError(err, "`Foo` allowed")
+	}
+	{
+		x := reflect.New(typ).Interface()
+		assert.NoError(jsoniter.UnmarshalFromString("{\"foo\":\"\\\"Foo\\\"\"}", x))
+		err := validate.Struct(x)
+		assert.NoError(err, `"Foo" allowed`)
+	}
 }

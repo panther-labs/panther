@@ -43,7 +43,8 @@ const S3SourceConfigurationPanel: React.FC = () => {
        * This will apply only to editing since creation requires users to change those field to proceed
        */
       initialValues.integrationLabel === values.integrationLabel &&
-      initialValues.s3Bucket === values.s3Bucket
+      initialValues.s3Bucket === values.s3Bucket &&
+      initialValues.kmsKey === values.kmsKey
     );
   }, [initialValues, values]);
 
@@ -126,7 +127,6 @@ const S3SourceConfigurationPanel: React.FC = () => {
                             size="small"
                             icon="close-outline"
                             variantColor="navyblue"
-                            variantBorderStyle="circle"
                             aria-label={`Remove prefix ${index}`}
                             onClick={() => arrayHelpers.remove(index)}
                           />
@@ -136,7 +136,6 @@ const S3SourceConfigurationPanel: React.FC = () => {
                             size="small"
                             icon="add"
                             variantColor="navyblue"
-                            variantBorderStyle="circle"
                             aria-label="Add prefix"
                             onClick={() =>
                               arrayHelpers.insert(index + 1, { prefix: '', logTypes: [] })

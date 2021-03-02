@@ -19,21 +19,27 @@ package api
  */
 
 import (
-	"errors"
+	"context"
 	"fmt"
+	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 const (
@@ -89,11 +95,162 @@ func (api *API) checkAwsS3Integration(input *models.CheckIntegrationInput) *mode
 	var roleCreds *credentials.Credentials
 	logProcessingRole := generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	roleCreds, out.ProcessingRoleStatus = api.getCredentialsWithStatus(logProcessingRole)
-	if out.ProcessingRoleStatus.Healthy {
-		out.S3BucketStatus = api.checkBucket(roleCreds, input.S3Bucket)
-		out.KMSKeyStatus = api.checkKey(roleCreds, input.KmsKey)
+
+	if !out.ProcessingRoleStatus.Healthy {
+		return out // can't run the next checks without a working IAM role
+	}
+
+	bucketStatus, bucketRegion := api.checkBucket(roleCreds, input.S3Bucket)
+	out.S3BucketStatus = bucketStatus
+	out.KMSKeyStatus = api.checkKey(roleCreds, input.KmsKey)
+
+	s3Client := s3.New(api.AwsSession, &aws.Config{
+		Credentials: roleCreds,
+		Region:      bucketRegion,
+	})
+	getObjectCheck, skipped := checkGetObject(s3Client, input)
+	if !skipped {
+		out.GetObjectStatus = &getObjectCheck
+	}
+
+	notificationsCheck, skipped := checkBucketNotifications(context.TODO(), s3Client, input, api.Config, *bucketRegion)
+	if !skipped {
+		out.BucketNotificationsStatus = &notificationsCheck
 	}
 	return out
+}
+
+func checkBucketNotifications(
+	ctx context.Context, s3Client s3iface.S3API, input *models.CheckIntegrationInput, config Config, bucketRegion string) (
+	h models.SourceIntegrationItemStatus, skipped bool) {
+
+	if !input.ManagedBucketNotifications {
+		return models.SourceIntegrationItemStatus{}, true
+	}
+
+	out, err := s3Client.GetBucketNotificationConfigurationWithContext(ctx, &s3.GetBucketNotificationConfigurationRequest{
+		Bucket:              &input.S3Bucket,
+		ExpectedBucketOwner: &input.AWSAccountID,
+	})
+	if err != nil {
+		return models.SourceIntegrationItemStatus{
+			Healthy:      false,
+			Message:      "Failed to get bucket notifications",
+			ErrorMessage: err.Error(),
+		}, false
+	}
+
+	topicARN := arn.ARN{
+		Partition: config.AWSPartition, // Note: Assume the onboarded bucket is in the same AWS partition as Panther
+		Service:   "sns",
+		Region:    bucketRegion,
+		AccountID: input.AWSAccountID,
+		Resource:  "panther-notifications-topic",
+	}.String()
+	// An SNS notification should exist for each one of the prefixes.
+	prefixes := reduceNoPrefixStrings(input.S3PrefixLogTypes.S3Prefixes())
+	var notFound []string // keep the prefixes which we didn't find notifications for
+	for _, p := range prefixes {
+		// search the prefix in the configurations
+		ok := false
+		for _, c := range out.TopicConfigurations {
+			if topicARN != aws.StringValue(c.TopicArn) {
+				continue
+			}
+			if !stringset.Contains(aws.StringValueSlice(c.Events), "s3:ObjectCreated:*") {
+				continue
+			}
+			if c.Filter == nil || c.Filter.Key == nil {
+				continue
+			}
+
+			// Check filter rules. The prefix should be an str prefix to p. Missing prefix is also fine if p is empty.
+			rulePrefix := ""
+			for _, r := range c.Filter.Key.FilterRules {
+				if strings.ToLower(aws.StringValue(r.Name)) == "prefix" {
+					rulePrefix = aws.StringValue(r.Value)
+				}
+			}
+			ok = strings.HasPrefix(p, rulePrefix)
+			if ok {
+				break
+			}
+		}
+		if !ok {
+			notFound = append(notFound, p) // checked all topic configs, couldn't find the prefix
+		}
+	}
+
+	if len(notFound) == 0 {
+		return models.SourceIntegrationItemStatus{
+			Healthy: true,
+			Message: "Bucket notifications are configured",
+		}, false
+	}
+	return models.SourceIntegrationItemStatus{
+		Healthy:      false,
+		Message:      "Bucket notifications are not properly configured",
+		ErrorMessage: fmt.Sprintf("Notifications are not configured for these prefixes: %+q", notFound),
+	}, false
+}
+
+// This function checks if the IAM identity of the s3Client has permissions to
+// read objects on the bucket.
+// For every s3 prefix in the input, it tries to read a random file on the bucket.
+// Even if the IAM role has permissions to read objects, the check may still fail due to a bucket policy or object ACL.
+// See https://github.com/panther-labs/panther/issues/2586 for details.
+func checkGetObject(s3Client s3iface.S3API, input *models.CheckIntegrationInput) (h models.SourceIntegrationItemStatus, skipped bool) {
+	// This check must only run for sources created in Panther >= 1.16, because it needs a new
+	// permission (s3.ListBucket) in the log processing role. The CFN stack of older sources doesn't have it.
+	minVersion := semver.MustParse("1.16.0-a") // 1.16.0-a < 1.16.0-dev (runs in dev env) < 1.16.0
+	if input.PantherVersion().LessThan(minVersion) {
+		return models.SourceIntegrationItemStatus{}, true
+	}
+
+	bucket, owner, s3Prefixes := input.S3Bucket, input.AWSAccountID, input.S3PrefixLogTypes.S3Prefixes()
+	prefixes := reduceNoPrefixStrings(s3Prefixes) // no need to check prefixes that overlap
+	for _, p := range prefixes {
+		err := checkGetObjectPrefix(s3Client, bucket, owner, p)
+		if err != nil {
+			return models.SourceIntegrationItemStatus{
+				Healthy:      false,
+				Message:      "Failed to read S3 object",
+				ErrorMessage: err.Error(),
+			}, false
+		}
+	}
+
+	return models.SourceIntegrationItemStatus{
+		Healthy: true,
+		Message: "We were able to read an object on the specified S3 bucket.",
+	}, false
+}
+
+func checkGetObjectPrefix(s3Client s3iface.S3API, bucket, owner, prefix string) error {
+	listOutput, err := s3Client.ListObjects(&s3.ListObjectsInput{
+		Bucket:              &bucket,
+		ExpectedBucketOwner: &owner,
+		Prefix:              &prefix,
+		MaxKeys:             aws.Int64(1),
+	})
+	if err != nil {
+		return errors.Wrap(err, "s3.ListObjects request failed")
+	}
+
+	if len(listOutput.Contents) == 0 {
+		return nil
+	}
+
+	s3Obj := listOutput.Contents[0]
+	_, err = s3Client.HeadObject(&s3.HeadObjectInput{
+		Bucket:              &bucket,
+		ExpectedBucketOwner: &owner,
+		Key:                 s3Obj.Key,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "s3.HeadObject request failed for %s", *s3Obj.Key)
+	}
+	return nil
 }
 
 func (api *API) checkKey(roleCredentials *credentials.Credentials, key string) models.SourceIntegrationItemStatus {
@@ -143,22 +300,26 @@ func (api *API) checkKey(roleCredentials *credentials.Credentials, key string) m
 	}
 }
 
-func (api *API) checkBucket(roleCredentials *credentials.Credentials, bucket string) models.SourceIntegrationItemStatus {
+func (api *API) checkBucket(roleCredentials *credentials.Credentials, bucket string) (models.SourceIntegrationItemStatus, *string) {
 	s3Client := s3.New(api.AwsSession, &aws.Config{Credentials: roleCredentials})
 
-	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
+	out, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
 			Healthy:      false,
 			Message:      "An error occurred while trying to get the region of the specified S3 bucket.",
 			ErrorMessage: err.Error(),
-		}
+		}, nil
 	}
 
+	region := out.LocationConstraint
+	if region == nil {
+		region = aws.String(endpoints.UsEast1RegionID)
+	}
 	return models.SourceIntegrationItemStatus{
 		Healthy: true,
 		Message: "We were able to call s3:GetBucketLocation on the specified S3 bucket.",
-	}
+	}, region
 }
 
 func (api *API) getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.SourceIntegrationItemStatus) {
@@ -222,6 +383,11 @@ func (api *API) evaluateIntegration(integration *models.CheckIntegrationInput) (
 		if !status.KMSKeyStatus.Healthy {
 			return status.KMSKeyStatus.Message, false, nil
 		}
+
+		if !status.GetObjectStatus.Healthy {
+			return status.GetObjectStatus.Message, false, nil
+		}
+
 		return "", true, nil
 	case models.IntegrationTypeSqs:
 		if !status.SqsStatus.Healthy {

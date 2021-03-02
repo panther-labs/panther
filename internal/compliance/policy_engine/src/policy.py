@@ -17,6 +17,7 @@
 import collections
 from importlib import util as import_util
 from typing import Any, Dict, List, Union
+from unittest.mock import patch
 
 
 class Policy:
@@ -45,6 +46,11 @@ class Policy:
             self._module = self.import_module(policy_id, path)
         except Exception as err:  # pylint: disable=broad-except
             self._import_error = err
+
+    @property
+    def module(self) -> Any:
+        """Used to expose the loaded python module to the engine, solely added in to support unit test mocking"""
+        return self._module
 
     #  pylint: disable=unsubscriptable-object
     def run(self, resource_attributes: Dict[str, Any]) -> Union[bool, Exception]:
@@ -83,7 +89,7 @@ class PolicySet:
             else:
                 self._global_policies.append(policy)
 
-    def analyze(self, resource: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, resource: Dict[str, Any], mock_methods: Dict[str, Any] = None) -> Dict[str, Any]:
         """Analyze a resource with this policy set.
 
         Returns:
@@ -104,7 +110,16 @@ class PolicySet:
         passed: List[str] = []
 
         for policy in self._policies_by_type[resource['type']] + self._global_policies:
-            result = policy.run(resource['attributes'])
+            if mock_methods:
+                try:
+                    with patch.multiple(policy.module, **mock_methods):
+                        result = policy.run(resource['attributes'])
+                except AttributeError as err:
+                    result = False
+                    missing = str(err).split(' ')[-1]
+                    errored.append({'id': policy.policy_id, 'message': f'Bad Mock Data: {missing}'})
+            else:
+                result = policy.run(resource['attributes'])
             if isinstance(result, Exception):
                 errored.append({'id': policy.policy_id, 'message': '{}: {}'.format(type(result).__name__, result)})
             elif result is False:

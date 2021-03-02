@@ -70,13 +70,17 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
   }
 
   if (!sortedDestinations.length) {
-    return <Text opacity={0.3}>Not configured</Text>;
+    return (
+      <Text fontSize="small" opacity={0.3}>
+        Not configured
+      </Text>
+    );
   }
 
   // If component is verbose, we should render all destinations as row with the name of destination displayed
   if (verbose) {
     return (
-      <RRLink to={urls.settings.destinations.list()}>
+      <RRLink to={urls.integrations.destinations.list()}>
         <Flex inline direction="column" spacing={2}>
           <LimitItemDisplay limit={limit}>
             {sortedDestinations.map(destination => (
@@ -92,7 +96,7 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
   }
 
   return (
-    <Flex align="center" minWidth={85} spacing={2}>
+    <Flex align="center" spacing={2}>
       <LimitItemDisplay limit={limit}>{sortedDestinations.map(getLogo)}</LimitItemDisplay>
     </Flex>
   );

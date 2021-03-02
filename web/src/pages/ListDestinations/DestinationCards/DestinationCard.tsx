@@ -39,14 +39,17 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination, logo, ch
       <GenericItemCard.Body>
         <GenericItemCard.Header>
           <GenericItemCard.Heading>
-            <Link as={RRLink} to={urls.settings.destinations.edit(destination.outputId)}>
+            <Link as={RRLink} to={urls.integrations.destinations.edit(destination.outputId)}>
               {destination.displayName}
             </Link>
           </GenericItemCard.Heading>
-          <GenericItemCard.Date date={formatDatetime(destination.lastModifiedTime)} />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(destination.lastModifiedTime)}
+            label="Updated"
+            labelFirst
+          />
           <DestinationCardOptions destination={destination} />
         </GenericItemCard.Header>
-
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value
             label="Alert Types"

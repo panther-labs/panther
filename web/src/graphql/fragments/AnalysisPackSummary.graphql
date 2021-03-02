@@ -1,0 +1,31 @@
+fragment AnalysisPackSummary on AnalysisPack {
+    id
+    displayName
+    description
+    enabled
+    updateAvailable
+
+    packVersion {
+        id
+        semVer
+    }
+
+    availableVersions {
+        id
+        semVer
+    }
+    packTypes {
+        GLOBAL
+        POLICY
+        RULE
+        DATAMODEL
+    }
+    packDefinition {
+        IDs
+    }
+
+    lastModified
+    lastModifiedBy
+    createdAt
+    createdBy
+}

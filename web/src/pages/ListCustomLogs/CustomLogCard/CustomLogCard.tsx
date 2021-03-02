@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Link } from 'pouncejs';
+import { Link, Text } from 'pouncejs';
 import GenericItemCard from 'Components/GenericItemCard';
 import { Link as RRLink } from 'react-router-dom';
 import { formatDatetime } from 'Helpers/utils';
@@ -43,16 +43,26 @@ const CustomLogCard: React.FC<CustomLogCardProps> = ({ customLog }) => {
               {customLog.logType}
             </Link>
           </GenericItemCard.Heading>
+          {customLog.referenceURL && (
+            <GenericItemCard.HeadingValue
+              value={
+                <Link external href={customLog.referenceURL}>
+                  {customLog.referenceURL}
+                </Link>
+              }
+              label="Reference URL"
+              labelFirst
+              withDivider
+            />
+          )}
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(customLog.updatedAt)}
+            label="Updated"
+            labelFirst
+          />
           <CustomLogCardOptions customLog={customLog} />
         </GenericItemCard.Header>
-        <GenericItemCard.ValuesGroup>
-          <GenericItemCard.Value label="Description" value={customLog.description} />
-          <GenericItemCard.Value label="Reference URL" value={customLog.referenceURL} />
-          <GenericItemCard.Value
-            label="Updated At"
-            value={formatDatetime(customLog.updatedAt, true)}
-          />
-        </GenericItemCard.ValuesGroup>
+        <Text fontSize="small">{customLog.description}</Text>
       </GenericItemCard.Body>
     </GenericItemCard>
   );

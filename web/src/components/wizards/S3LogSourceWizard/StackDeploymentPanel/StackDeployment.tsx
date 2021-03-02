@@ -39,6 +39,7 @@ const StackDeployment: React.FC = () => {
         integrationLabel: values.integrationLabel,
         s3Bucket: values.s3Bucket,
         kmsKey: values.kmsKey || null,
+        managedBucketNotifications: values.managedBucketNotifications,
       },
     },
     onError: () => pushSnackbar({ variant: 'error', title: 'Failed to generate CFN template' }),
@@ -52,8 +53,7 @@ const StackDeployment: React.FC = () => {
     `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +
     `&param_RoleSuffix=${toStackNameFormat(values.integrationLabel)}` +
     `&param_S3Bucket=${values.s3Bucket}` +
-    // FIXME: TBD How this will be implemented
-    // `&param_S3Prefix=${values.s3Prefix}` +
+    `&param_ManagedBucketNotifications=${values.managedBucketNotifications}` +
     `&param_KmsKey=${values.kmsKey}`;
 
   return (
@@ -76,9 +76,8 @@ const StackDeployment: React.FC = () => {
                 continue with setup completion.
               </Text>
               <LinkButton
-                external
-                loading={loading}
                 disabled={!!error || loading}
+                external
                 to={cfnConsoleLink}
                 variantColor="teal"
               >

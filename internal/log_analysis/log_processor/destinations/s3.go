@@ -85,6 +85,8 @@ func CreateS3Destination(jsonAPI jsoniter.API) Destination {
 		s3Bucket:            common.Config.ProcessedDataBucket,
 		snsTopicArn:         common.Config.SnsTopicARN,
 		latencyCounter:      logmetrics.EventLatencySeconds,
+		outputFiles:         logmetrics.OutputFiles,
+		outputBytes:         logmetrics.OutputBytes,
 		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
 		maxBufferSize:       uploaderBufferMaxSizeBytes,
 		maxDuration:         maxDuration,
@@ -125,6 +127,8 @@ type S3Destination struct {
 	maxBuffers          int
 	jsonAPI             jsoniter.API
 	latencyCounter      metrics.Counter
+	outputFiles         metrics.Counter
+	outputBytes         metrics.Counter
 }
 
 // SendEvents stores events in S3.
@@ -225,20 +229,9 @@ func (d *S3Destination) sendData(buffer *s3EventBuffer, errChan chan error) {
 	}
 
 	var (
-		err           error
-		contentLength int64
-		key           string
+		err error
+		key string
 	)
-
-	operation := common.OpLogManager.Start("sendData", common.OpLogS3ServiceDim)
-	defer func() {
-		operation.Stop()
-		operation.Log(err,
-			// s3 dim info
-			zap.Int64("contentLength", contentLength),
-			zap.String("bucket", d.s3Bucket),
-			zap.String("key", key))
-	}()
 
 	key = getS3ObjectKey(buffer)
 	if err != nil {
@@ -251,8 +244,6 @@ func (d *S3Destination) sendData(buffer *s3EventBuffer, errChan chan error) {
 		errChan <- err
 		return
 	}
-
-	contentLength = int64(len(payload)) // for logging above
 
 	if _, err := d.s3Uploader.Upload(&s3manager.UploadInput{
 		Bucket: &d.s3Bucket,
@@ -270,19 +261,12 @@ func (d *S3Destination) sendData(buffer *s3EventBuffer, errChan chan error) {
 	if err != nil {
 		errChan <- err
 	}
+	d.outputBytes.Add(float64(len(payload)))
+	d.outputFiles.Add(1)
 }
 
 func (d *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) error {
-	var err error
-	operation := common.OpLogManager.Start("sendSNSNotification", common.OpLogSNSServiceDim)
-	defer func() {
-		operation.Stop()
-		operation.Log(err,
-			zap.String("topicArn", d.snsTopicArn))
-	}()
-
 	s3Notification := notify.NewS3ObjectPutNotification(d.s3Bucket, key, buffer.bytes)
-
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)
 	if err != nil {
 		err = errors.Wrap(err, "failed to marshal notification")

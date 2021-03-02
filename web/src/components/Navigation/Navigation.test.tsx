@@ -52,13 +52,17 @@ describe('Navigation', () => {
     // Expand
     fireEvent.click(getByText('Log Analysis'));
     expect(getByText('Overview')).toBeInTheDocument();
-    expect(getByText('Sources')).toBeInTheDocument();
 
-    expect(getByText('Cloud Security')).toBeInTheDocument();
-
+    // Expand
     fireEvent.click(getByText('Cloud Security'));
     expect(getByText('Resources')).toBeInTheDocument();
     expect(getByText('Settings')).toBeInTheDocument();
+
+    // Expand
+    fireEvent.click(getByText('Integrations'));
+    expect(getByText('Log Sources')).toBeInTheDocument();
+    expect(getByText('Cloud Accounts')).toBeInTheDocument();
+    expect(getByText('Alert Destinations')).toBeInTheDocument();
 
     fireEvent.click(getByText('Settings'));
     expect(getByText('General')).toBeInTheDocument();

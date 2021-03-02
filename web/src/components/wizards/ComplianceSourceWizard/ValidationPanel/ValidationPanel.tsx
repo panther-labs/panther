@@ -146,7 +146,7 @@ const ValidationPanel: React.FC = () => {
         />
         <WizardPanel.Actions>
           <Flex direction="column" spacing={4}>
-            <LinkButton to={urls.compliance.sources.list()}>Finish Setup</LinkButton>
+            <LinkButton to={urls.integrations.cloudAccounts.list()}>Finish Setup</LinkButton>
             {!initialValues.integrationId && (
               <Link
                 as={AbstractButton}

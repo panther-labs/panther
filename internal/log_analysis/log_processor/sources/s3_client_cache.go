@@ -19,8 +19,7 @@ package sources
  */
 
 import (
-	"sort"
-	"strings"
+	"context"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -38,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/awsretry"
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -59,106 +59,6 @@ const (
 type s3ClientCacheKey struct {
 	roleArn   string
 	awsRegion string
-}
-
-type prefixSource struct {
-	prefix string
-	source *models.SourceIntegration
-}
-
-type sourceCache struct {
-	// last time the cache was updated
-	cacheUpdateTime time.Time
-	// sources by id
-	index map[string]*models.SourceIntegration
-	// sources by s3 bucket sorted by longest prefix first
-	byBucket map[string][]prefixSource
-}
-
-// LoadS3 loads the source configuration for an S3 object.
-// This will update the cache if needed.
-// It will return error if it encountered an issue retrieving the source information
-func (c *sourceCache) LoadS3(bucketName, objectKey string) (*models.SourceIntegration, error) {
-	if err := c.Sync(time.Now()); err != nil {
-		return nil, err
-	}
-	return c.FindS3(bucketName, objectKey), nil
-}
-
-// Loads the source configuration for an source id.
-// This will update the cache if needed.
-// It will return error if it encountered an issue retrieving the source information or if the source is not found.
-func (c *sourceCache) Load(id string) (*models.SourceIntegration, error) {
-	if err := c.Sync(time.Now()); err != nil {
-		return nil, err
-	}
-	src := c.Find(id)
-	if src != nil {
-		return src, nil
-	}
-	return nil, errors.Errorf("source %q not found", id)
-}
-
-// Sync will update the cache if too much time has passed
-func (c *sourceCache) Sync(now time.Time) error {
-	if c.cacheUpdateTime.Add(sourceCacheDuration).Before(now) {
-		// we need to update the cache
-		input := &models.LambdaInput{
-			ListIntegrations: &models.ListIntegrationsInput{},
-		}
-		var output []*models.SourceIntegration
-		if err := genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, &output); err != nil {
-			return err
-		}
-		c.Update(now, output)
-	}
-	return nil
-}
-
-// Update updates the cache
-func (c *sourceCache) Update(now time.Time, sources []*models.SourceIntegration) {
-	byBucket := make(map[string][]prefixSource)
-	index := make(map[string]*models.SourceIntegration)
-	for _, source := range sources {
-		bucket, prefixes := source.S3Info()
-		for _, prefix := range prefixes {
-			byBucket[bucket] = append(byBucket[bucket], prefixSource{prefix: prefix, source: source})
-		}
-		index[source.IntegrationID] = source
-	}
-	// Sort sources for each bucket.
-	// It is important to have the sources sorted by longest prefix first.
-	// This ensures that longer prefixes (ie `/foo/bar`) have precedence over shorter ones (ie `/foo`).
-	// This is especially important for the empty prefix as it would match all objects in a bucket making
-	// other sources invalid.
-	for _, sources := range byBucket {
-		sources := sources
-		sort.Slice(sources, func(i, j int) bool {
-			// Sort by prefix length descending
-			return len(sources[i].prefix) > len(sources[j].prefix)
-		})
-	}
-	*c = sourceCache{
-		byBucket:        byBucket,
-		index:           index,
-		cacheUpdateTime: now,
-	}
-}
-
-// Find looks up a source by id without updating the cache
-func (c *sourceCache) Find(id string) *models.SourceIntegration {
-	return c.index[id]
-}
-
-// FindS3 looks up a source by bucket name and prefix without updating the cache
-func (c *sourceCache) FindS3(bucketName, objectKey string) *models.SourceIntegration {
-	prefixSourcesOrdered := c.byBucket[bucketName]
-	for _, s := range prefixSourcesOrdered {
-		if strings.HasPrefix(objectKey, s.prefix) {
-			return s.source
-		}
-	}
-	return nil
 }
 
 var (
@@ -250,7 +150,7 @@ func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string
 
 	locationDiscoveryClient := newS3ClientFunc(nil, awsCreds)
 	input := &s3.GetBucketLocationInput{Bucket: aws.String(s3Bucket)}
-	location, err := locationDiscoveryClient.GetBucketLocation(input)
+	location, err := locationDiscoveryClient.GetBucketLocationWithContext(context.TODO(), input)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to find bucket region for %s", s3Bucket)
 	}
@@ -295,6 +195,48 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 		config.WithRegion(*region)
 	}
 	awsSession := session.Must(session.NewSession(config)) // use default retries for fetching creds, avoids hangs!
-	return s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
+	s3Client := s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
 		awsretry.NewConnectionErrRetryer(s3ClientMaxRetries))))
+	return &RefreshableS3Client{
+		S3API: s3Client,
+		creds: creds,
+	}
+}
+
+// Wrapper around S3 client. It will refresh credentials in case `InvalidAccessKeyId` error is encountered
+type RefreshableS3Client struct {
+	s3iface.S3API
+	creds *credentials.Credentials
+}
+
+// This error code will appear if the IAM role assumed by Panther log processing is deleted and recreated.
+// When we try to perform operations to S3, we will get an error that the AKID is invalid
+const invalidAKIDError = "InvalidAccessKeyId"
+
+func (r *RefreshableS3Client) GetBucketLocationWithContext(
+	ctx aws.Context,
+	request *s3.GetBucketLocationInput,
+	options ...request.Option) (*s3.GetBucketLocationOutput, error) {
+
+	response, err := r.S3API.GetBucketLocationWithContext(ctx, request, options...)
+	if awsutils.IsAnyError(err, invalidAKIDError) {
+		zap.L().Debug("encountered error, refreshing S3 client credentials", zap.Error(err))
+		r.creds.Expire()
+		response, err = r.S3API.GetBucketLocationWithContext(ctx, request, options...)
+	}
+	return response, err
+}
+
+func (r *RefreshableS3Client) GetObjectWithContext(
+	ctx aws.Context,
+	request *s3.GetObjectInput,
+	options ...request.Option) (*s3.GetObjectOutput, error) {
+
+	response, err := r.S3API.GetObjectWithContext(ctx, request, options...)
+	if awsutils.IsAnyError(err, invalidAKIDError) {
+		zap.L().Debug("encountered error, refreshing S3 client credentials", zap.Error(err))
+		r.creds.Expire()
+		response, err = r.S3API.GetObjectWithContext(ctx, request, options...)
+	}
+	return response, err
 }

@@ -44,7 +44,8 @@ def lambda_handler(lambda_event: Dict[str, Any], unused_context: Any) -> Dict[st
                 {
                     'attributes': { ... resource attributes ... },
                     'id': 'arn:aws:s3:::my-bucket',
-                    'type': 'AWS.S3.Bucket'
+                    'type': 'AWS.S3.Bucket',
+                    'mocks': { ... mock name : mock value ... },
                 }
             ]
         }

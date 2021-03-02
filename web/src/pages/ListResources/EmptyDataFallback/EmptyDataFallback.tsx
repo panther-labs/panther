@@ -32,7 +32,7 @@ const ListResourcesPageEmptyDataFallback: React.FC = () => {
       <Text color="gray-300" textAlign="center" mb={8}>
         You don{"'"}t have any resources connected to your Panther account
       </Text>
-      <LinkButton to={urls.compliance.sources.create()}>Get started</LinkButton>
+      <LinkButton to={urls.integrations.cloudAccounts.create()}>Get started</LinkButton>
     </Flex>
   );
 };

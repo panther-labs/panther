@@ -41,8 +41,7 @@ var _ logtypes.Resolver = (*Resolver)(nil)
 // Resolve implements logtypes.Resolver
 func (r *Resolver) Resolve(ctx context.Context, name string) (logtypes.Entry, error) {
 	reply, err := r.LogTypesAPI.GetSchema(ctx, &GetSchemaInput{
-		Name:     name,
-		Revision: 0,
+		Name: name,
 	})
 	zap.L().Debug("log types API reply", zap.Any("reply", reply), zap.Error(err))
 	if err != nil {

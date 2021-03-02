@@ -17,6 +17,7 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import MagicMock
 
 from ..src.policy import Policy, PolicySet
 
@@ -113,7 +114,7 @@ class TestPolicySet(unittest.TestCase):
     def test_analyze(self) -> None:
         """Analyze a resource with a set of policies."""
         resource = {'attributes': {'hello': 'world'}, 'id': 'arn:aws:s3:::my-bucket', 'type': 'AWS.S3.Bucket'}
-        result = self._policy_set.analyze(resource)
+        result = self._policy_set.analyze(resource, dict())
         result['failed'] = list(sorted(result['failed']))
 
         expected = {
@@ -127,3 +128,58 @@ class TestPolicySet(unittest.TestCase):
         }
 
         self.assertEqual(expected, result)
+
+    def test_policy_set_bad_mock(self) -> None:
+        """Bad Mock data provided"""
+        path = os.path.join(tempfile.gettempdir(), 'panther-mock.py')
+        with open(path, 'w') as policy_file:
+            policy_file.write(
+                'import boto3\nfrom datetime import date\nfrom unittest.mock import MagicMock\n'
+                'def policy(resource): return all([isinstance(boto3, MagicMock), '
+                'isinstance(boto3.client, MagicMock), isinstance(date, MagicMock)])'
+            )
+        policy_set = PolicySet([{'id': 'test-id', 'body': path, 'resourceTypes': ['resource']}])
+        mock_methods = {'bad_mock': MagicMock(return_value='bad_value')}
+        test_resource = {
+            'attributes': {},
+            'id': 'bad-mock',
+            'type': 'resource',
+        }
+        expected = {
+            'errored': [{
+                'id': 'test-id',
+                'message': "Bad Mock Data: 'bad_mock'"
+            }],
+            'failed': ['test-id'],
+            'id': 'bad-mock',
+            'passed': []
+        }
+        self.assertEqual(expected, policy_set.analyze(test_resource, mock_methods))
+
+    def test_policy_set_valid_mock(self) -> None:
+        """Bad Mock data provided"""
+        path = os.path.join(tempfile.gettempdir(), 'panther-mock.py')
+        policy_set = PolicySet([{'id': 'test-id', 'body': path, 'resourceTypes': ['resource']}])
+        mock_methods = {
+            'boto3': MagicMock(return_value='value'),
+            'date': MagicMock(return_value='value'),
+        }
+        test_resource = {
+            'attributes': {},
+            'id': 'valid-mock',
+            'type': 'resource',
+        }
+        expected = {'errored': [], 'failed': [], 'id': 'valid-mock', 'passed': ['test-id']}
+        self.assertEqual(expected, policy_set.analyze(test_resource, mock_methods))
+
+    def test_policy_set_no_mock(self) -> None:
+        """Bad Mock data provided"""
+        path = os.path.join(tempfile.gettempdir(), 'panther-mock.py')
+        policy_set = PolicySet([{'id': 'test-id', 'body': path, 'resourceTypes': ['resource']}])
+        test_resource = {
+            'attributes': {},
+            'id': 'no-mock',
+            'type': 'resource',
+        }
+        expected = {'errored': [], 'failed': ['test-id'], 'id': 'no-mock', 'passed': []}
+        self.assertEqual(expected, policy_set.analyze(test_resource))
