@@ -68,7 +68,11 @@ class Engine:  # pylint: disable=too-many-instance-attributes
         # Setup mock functions
         mock_methods = dict()
         if event_mocks:
-            mock_methods = {k: MagicMock(return_value=v) for k, v in event_mocks.items()}
+            mock_methods = {
+                each_mock["object_name"]: MagicMock(return_value=each_mock["return_value"])
+                for each_mock in event_mocks
+                if "object_name" in each_mock and "return_value" in each_mock
+            }
 
         if mock_methods:
             with patch.multiple(rule.module, **mock_methods):

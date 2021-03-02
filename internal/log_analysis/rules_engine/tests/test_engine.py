@@ -487,10 +487,16 @@ class TestEngine(TestCase):
             'def alert_context(event):', '\treturn {}', 'def title(event):',
             '\treturn f"test_rule_with_mocking_{str(isinstance(boto3, MagicMock))}"'
         ]
-        mocks = {
-            'boto3': 'boto3_return_value',
-            'date': 'date_return_value',
-        }
+        mocks = [
+            {
+                'object_name': 'boto3',
+                'return_value': 'boto3_return_value',
+            },
+            {
+                'object_name': 'date',
+                'return_value': 'date_return_value',
+            }
+        ]
         event = {'id': 'event_id', 'data': {'is_dst': True, 'p_log_type': 'log'}, 'mocks': mocks}
         rule = {'id': 'test_rule_with_mocking', 'body': '\n'.join(x for x in rule_body), 'versionId': 'versionId'}
         expected_result = {

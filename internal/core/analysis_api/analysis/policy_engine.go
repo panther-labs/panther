@@ -150,7 +150,7 @@ func makeTestResources(policy *models.TestPolicyInput) ([]enginemodels.Resource,
 			return nil, &TestInputError{fmt.Errorf(`Resource for test "%s" is not valid json: %w`, test.Name, err)}
 		}
 
-		var mocks map[string]string
+		var mocks []map[string]string
 		if err := jsoniter.UnmarshalFromString(test.Mocks, &mocks); err != nil {
 			//nolint // Error is capitalized because will be returned to the UI
 			return nil, &TestInputError{fmt.Errorf(`Mocks for test "%s" resource "%d" is not valid json: %w`, test.Name, i, err)}
