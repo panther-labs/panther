@@ -108,36 +108,35 @@ class TestEngine(unittest.TestCase):
                             },
                             'id': 'bad-mock',
                             'type': 'AWS.S3.Bucket',
-                            'mocks': [
-                                {
-                                    'object_name': 'boto3',
-                                    'return_value': 'boto3_return_value',
-                                },
-                                {
-                                    'object_name': 'date',
-                                    'return_value': 'date_return_value',
-                                },
-                                {
-                                    'object_name': 'bad_mock',
-                                    'return_value': 'example_bad_mock_return_value'
-                                }
-                            ]
+                            'mocks':
+                                [
+                                    {
+                                        'object_name': 'boto3',
+                                        'return_value': 'boto3_return_value',
+                                    }, {
+                                        'object_name': 'date',
+                                        'return_value': 'date_return_value',
+                                    }, {
+                                        'object_name': 'bad_mock',
+                                        'return_value': 'example_bad_mock_return_value'
+                                    }
+                                ]
                         }, {
                             'attributes': {
                                 'key': 'value'
                             },
                             'id': 'valid-mock',
                             'type': 'AWS.S3.Bucket',
-                            'mocks': [
-                                {
-                                    'object_name': 'boto3',
-                                    'return_value': 'boto3_return_value',
-                                },
-                                {
-                                    'object_name': 'date',
-                                    'return_value': 'date_return_value',
-                                }
-                            ]
+                            'mocks':
+                                [
+                                    {
+                                        'object_name': 'boto3',
+                                        'return_value': 'boto3_return_value',
+                                    }, {
+                                        'object_name': 'date',
+                                        'return_value': 'date_return_value',
+                                    }
+                                ]
                         }
                     ],
             }
