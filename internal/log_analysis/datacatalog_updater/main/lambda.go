@@ -137,6 +137,7 @@ func main() {
 // FIXME: Release 1.16 adds a new partition column to the tables in Glue.
 // FiXME: The below needs to execute BEFORE processing any S3 events to ensure
 // FIXME: all tables are updated with the new partition column.
+// FIXME: This will run once per container instantiation, testing shows this to be about 2 times per hour.
 // partitionColumnMigration updates schemas if they have not had the new partition added, best effort
 func partitionColumnMigration(handler *datacatalog.LambdaHandler, clientSession *session.Session) {
 	zap.L().Info("partitionColumnMigration", zap.String("action", "started"))
@@ -166,6 +167,10 @@ func partitionColumnMigration(handler *datacatalog.LambdaHandler, clientSession 
 	if len(getTableOutput.Table.PartitionKeys) == 5 { // year, month, day, hour, partition_time
 		return // done!
 	}
+
+	zap.L().Info("partitionColumnMigration",
+		zap.String("action", "partition schema update"),
+		zap.Any("logTypes", logTypesInUse))
 
 	// sync all tables in all databases
 	err = handler.HandleSyncDatabaseEvent(ctx, &datacatalog.SyncDatabaseEvent{
