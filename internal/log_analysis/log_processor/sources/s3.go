@@ -191,6 +191,10 @@ func calculatePartSize(size int64) int64 {
 
 // ParseNotification parses a message received
 func ParseNotification(message string) ([]*S3ObjectInfo, error) {
+	// Most notifications will be s3 event notifications, the AWS CloudTrail service however can be
+	// configured to directly notify SNS that it has written new objects to s3. If notifications are
+	// configured like this, we first convert them into the same structure as we expect from S3 event
+	// notifications so that we can process them the same as other notifications.
 	s3Objects := parseCloudTrailNotification(message)
 
 	// If the input was not a CloudTrail notification, s3Objects will be nil
@@ -226,9 +230,11 @@ func parseCloudTrailNotification(message string) (result []*S3ObjectInfo) {
 
 	for _, s3Key := range cloudTrailNotification.S3ObjectKey {
 		info := &S3ObjectInfo{
-			S3Bucket:     *cloudTrailNotification.S3Bucket,
-			S3ObjectKey:  *s3Key,
-			S3ObjectSize: 1,
+			S3Bucket:    *cloudTrailNotification.S3Bucket,
+			S3ObjectKey: *s3Key,
+			// A negative object size indicates we don't know what the true size is. We don't leave
+			// this as the default of 0 as then it would get dropped by the log processor.
+			S3ObjectSize: -1,
 		}
 		result = append(result, info)
 	}
