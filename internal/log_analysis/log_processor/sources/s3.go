@@ -226,8 +226,9 @@ func parseCloudTrailNotification(message string) (result []*S3ObjectInfo) {
 
 	for _, s3Key := range cloudTrailNotification.S3ObjectKey {
 		info := &S3ObjectInfo{
-			S3Bucket:    *cloudTrailNotification.S3Bucket,
-			S3ObjectKey: *s3Key,
+			S3Bucket:     *cloudTrailNotification.S3Bucket,
+			S3ObjectKey:  *s3Key,
+			S3ObjectSize: 1,
 		}
 		result = append(result, info)
 	}
