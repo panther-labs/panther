@@ -22,6 +22,7 @@ import (
 	"context"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
@@ -59,7 +60,7 @@ func (h *LambdaHandler) HandleS3EventRecord(ctx context.Context, event *events.S
 	partitionTime := partition.GetTime()
 	tableMeta := partition.GetGlueTableMetadata()
 	if _, err := tableMeta.CreateJSONPartition(h.GlueClient, partitionTime); err != nil {
-		return err
+		return errors.Wrapf(err, "cannot create partition for s3://%s/%s", bucketName, objectKey)
 	}
 
 	h.observeCreatedPartition(partitionURL)
