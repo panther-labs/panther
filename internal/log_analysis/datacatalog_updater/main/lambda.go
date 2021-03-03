@@ -157,28 +157,39 @@ func partitionColumnMigration(handler *datacatalog.LambdaHandler, clientSession 
 		return
 	}
 
-	// check the first log type to see if it already has the new partition_time partition column
-	getTableOutput, err := awsglue.GetTable(handler.GlueClient,
-		pantherdb.LogProcessingDatabase, pantherdb.TableName(logTypesInUse[0]))
-	if err != nil {
-		zap.L().Error("partitionColumnMigration", zap.Error(err))
-		return
-	}
-	if len(getTableOutput.Table.PartitionKeys) == 5 { // year, month, day, hour, partition_time
-		return // done!
+	// check ALL log types to see if table already has the new partition_time partition column
+	needToSync := false
+	for _, logType := range logTypesInUse {
+		// just checking the log processing db, that should be enough
+		if !pantherdb.IsInDatabase(logType, pantherdb.LogProcessingDatabase) {
+			continue
+		}
+		getTableOutput, err := awsglue.GetTable(handler.GlueClient,
+			pantherdb.LogProcessingDatabase, pantherdb.TableName(logType))
+		if err != nil {
+			zap.L().Warn("partitionColumnMigration", zap.Error(err))
+			continue
+		}
+		if len(getTableOutput.Table.PartitionKeys) != 5 { // year, month, day, hour, partition_time
+			needToSync = true // does not have all partitions
+			break
+		}
 	}
 
-	zap.L().Info("partitionColumnMigration",
-		zap.String("action", "partition schema update"),
-		zap.Any("logTypes", logTypesInUse))
+	// this generally will only be called once, but for some reason if all tables are not updated it could be called again
+	if needToSync {
+		zap.L().Info("partitionColumnMigration",
+			zap.String("action", "partition schema update"),
+			zap.Any("logTypes", logTypesInUse))
 
-	// sync all tables in all databases
-	err = handler.HandleSyncDatabaseEvent(ctx, &datacatalog.SyncDatabaseEvent{
-		TraceID:          "partitionColumnMigration",
-		RequiredLogTypes: logTypesInUse,
-	})
-	if err != nil {
-		zap.L().Error("partitionColumnMigration", zap.Error(err))
-		return
+		// sync all tables in all databases
+		err = handler.HandleSyncDatabaseEvent(ctx, &datacatalog.SyncDatabaseEvent{
+			TraceID:          "partitionColumnMigration",
+			RequiredLogTypes: logTypesInUse,
+		})
+		if err != nil {
+			zap.L().Error("partitionColumnMigration", zap.Error(err))
+			return
+		}
 	}
 }
