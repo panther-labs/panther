@@ -34,9 +34,12 @@ import (
 
 	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/internal/core/source_api/apifunctions"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/stringset"
@@ -124,5 +127,58 @@ func main() {
 		Logger:       logger,
 	}
 
+	// FIXME: This can be removed in a few releases after 1.16
+	partitionColumnMigration(&handler, clientsSession)
+
 	lambda.StartHandler(&handler)
+}
+
+// FIXME: This can be removed in a few releases after 1.16 after everyone has upgraded.
+// FIXME: Release 1.16 adds a new partition column to the tables in Glue.
+// FiXME: The below needs to execute BEFORE processing any S3 events to ensure
+// FIXME: all tables are updated with the new partition column.
+// FIXME: This will run once per container instantiation, testing shows this to be about 2 times per hour.
+// partitionColumnMigration updates schemas if they have not had the new partition added, best effort
+func partitionColumnMigration(handler *datacatalog.LambdaHandler, clientSession *session.Session) {
+	zap.L().Info("partitionColumnMigration", zap.String("action", "started"))
+	defer func() {
+		zap.L().Info("partitionColumnMigration", zap.String("action", "finished"))
+	}()
+
+	// get the currently onboarded log types
+	ctx := context.Background()
+	logTypesInUse, err := apifunctions.ListLogTypes(ctx, lambdaclient.New(clientSession))
+	if err != nil {
+		zap.L().Error("partitionColumnMigration", zap.Error(err))
+		return
+	}
+
+	if len(logTypesInUse) == 0 {
+		return
+	}
+
+	// check the first log type to see if it already has the new partition_time partition column
+	getTableOutput, err := awsglue.GetTable(handler.GlueClient,
+		pantherdb.LogProcessingDatabase, pantherdb.TableName(logTypesInUse[0]))
+	if err != nil {
+		zap.L().Error("partitionColumnMigration", zap.Error(err))
+		return
+	}
+	if len(getTableOutput.Table.PartitionKeys) == 5 { // year, month, day, hour, partition_time
+		return // done!
+	}
+
+	zap.L().Info("partitionColumnMigration",
+		zap.String("action", "partition schema update"),
+		zap.Any("logTypes", logTypesInUse))
+
+	// sync all tables in all databases
+	err = handler.HandleSyncDatabaseEvent(ctx, &datacatalog.SyncDatabaseEvent{
+		TraceID:          "partitionColumnMigration",
+		RequiredLogTypes: logTypesInUse,
+	})
+	if err != nil {
+		zap.L().Error("partitionColumnMigration", zap.Error(err))
+		return
+	}
 }
