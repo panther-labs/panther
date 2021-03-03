@@ -1,0 +1,310 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Sample template for gathering Cloud Watch logs into Panther via Firehose
+
+Parameters:
+  LogGroupNameLabel:
+    Type: String
+    Description: A simple string alias for the log group name (i.e cloudwatchlog-name)
+  SubscriptionLogGroupName:
+    Type: String
+    Description: The Log group name that will be ingested by panther.
+  SubscriptionFilterPattern:
+    Type: String
+    Default: ' '
+    Description: (Optional) The default pattern " " will return all events, You can specify a more specific filter pattern here.
+  PantherSNSTopicName:
+    Type: String
+    Description: The SNS topic to send S3 notifications for pulling data.
+
+Resources:
+  # IAM Permisssions - Roles and Policies
+  CloudwatchKinesisFirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub logs.${AWS::Region}.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: panther-cloudwatch-kinesis-firehose-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - firehose:*
+                Resource: !Sub arn:${AWS::Partition}:firehose:${AWS::Region}:${AWS::AccountId}:*
+      RoleName: panther-cloudwatch-kinesis-firehose-role
+
+  KinesisFirehoseToS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - firehose.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      RoleName: panther-kinesis-firehose-s3-role
+
+  PantherKinesisFirehoseLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      RoleName: panther-kinesis-firehose-lambda-role
+
+  S3LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt PantherTransformationFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !GetAtt FirehoseBucket.Arn
+
+  CloudwatchFirehoseS3ManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: panther-cloudwatch-firehose-s3-policy
+      Description: Cloudwatch Firehose S3 Read and Write Policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:AbortMultipartUpload
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:PutObject
+            Resource:
+              - !GetAtt FirehoseBucket.Arn
+              - !Sub ${FirehoseBucket.Arn}/*
+              - !GetAtt PantherBucket.Arn
+              - !Sub ${PantherBucket.Arn}/*
+      Roles:
+        - !Ref KinesisFirehoseToS3Role
+        - !Ref PantherKinesisFirehoseLambdaRole
+
+    # SUBSCRIPTION FILTER TELLS FIREHOSE WHAT CLOUDWATCH LOGS TO PULL FROM
+  CloudwatchSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: !GetAtt KinesisFirehoseToS3.Arn
+      FilterPattern: !Ref SubscriptionFilterPattern
+      LogGroupName: !Ref SubscriptionLogGroupName
+      RoleArn: !GetAtt CloudwatchKinesisFirehoseRole.Arn
+
+  KinesisFirehoseToS3:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: panther-kinesis-firehose-s3-delivery-stream
+      S3DestinationConfiguration:
+        RoleARN: !GetAtt KinesisFirehoseToS3Role.Arn
+        BucketARN: !GetAtt FirehoseBucket.Arn
+        Prefix: !Sub firehose-${LogGroupNameLabel}/
+        CompressionFormat: GZIP
+
+  FirehoseBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub panther-firehose-cloudwatch-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      VersioningConfiguration:
+        Status: Enabled
+
+  # FINAL PANTHER LOG FORMAT DESTINATION
+  PantherBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub panther-cloudwatch-logs-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      VersioningConfiguration:
+        Status: Enabled
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Event: s3:ObjectCreated:Put
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: !Sub panther-${LogGroupNameLabel}/
+                  - Name: suffix
+                    Value: .csv
+            Topic: !Sub arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${PantherSNSTopicName}
+
+  # FIREHOSE - PANTHER LAMBDA TRANSFORMATION
+  # FUNCTION TRANSFORMS LOGS INTO A PANTHER PROCESSING FORMAT (CSV)
+  PantherTransformationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: panther-firehose-transformation
+      Role: !GetAtt PantherKinesisFirehoseLambdaRole.Arn
+      Handler: index.lambda_handler
+      Runtime: python3.7
+      MemorySize: 8192
+      Timeout: 900
+      Environment:
+        Variables:
+          PANTHER: !Ref PantherBucket
+          FIREHOSE: !Ref FirehoseBucket
+          PREFIX: !Sub panther-${LogGroupNameLabel}
+      Code:
+        ZipFile: |
+          import ast
+          import boto3
+          from collections.abc import Mapping
+          import csv
+          from functools import reduce
+          import gzip
+          import json
+          import os
+          from time import time
+
+          HEADERS = []
+          PANTHER = os.environ['PANTHER']
+          FIREHOSE = os.environ['FIREHOSE']
+          PREFIX = os.environ['PREFIX']
+
+          def load(file_name):
+              with gzip.open(file_name, 'rb') as f:
+                  data = f.read()
+              f.close()
+              a = gzip.decompress(data).decode('utf-8')
+              b = a.replace("}{", "}.split.{")
+              c = b.split(".split.")
+              count = 0
+              for item in c:
+                  HEADERS = []
+                  obj = json.loads(item)
+                  build_csv_events(obj)
+              
+          def build_csv_events(data):
+              logs = parse_events(data)
+              count = 0
+              file_name = '{}{}.csv'.format('panther_cwl_', str(time()).replace('.', '_'))
+              print(file_name)
+              for log in logs:
+                  if count == 0: 
+                      write_csv(file_name, log, True)
+                  else: 
+                      write_csv(file_name, log)
+                  count += 1
+                  
+          def parse_events(data):
+              logs = []
+              log_events = data.get('logEvents', None)
+              count = 0
+              start_rid = None
+              end_rid = None
+              if type(log_events) is list:    
+                  for event in log_events:
+                      msg = ''
+                      str_msg = event.get('message')
+                      log = {}
+                      try:
+                          msg = ast.literal_eval(str_msg)
+                          for k,v in msg.items():
+                              if type(v) is dict:
+                                  log.update(v)
+                              else:
+                                  log[k] = v    
+                          for k, v in data.items():
+                              if k == 'logEvents':
+                                  continue
+                              log[k] = v
+                              HEADERS.extend([item.lower() for item in list(log.keys())])
+                              log = {k.lower(): v for k, v in log.items()}
+                          logs.append(log)
+                          count +=1  
+                      except:
+                          if 'START' in str_msg:
+                              start_rid = get_requestid('start', str_msg)
+                              log['requestid'] = start_rid
+                          elif 'END' in str_msg:
+                              end_rid = get_requestid('end', str_msg)
+              return logs            
+                                                  
+          def get_requestid(position, str_msg):
+              tmp = str_msg.replace('\n', '').replace(' ', '')
+              add = len('RequestId:')
+              start = tmp.find('RequestId:')
+              if position == 'start':
+                  end = tmp.find('Version')
+                  return tmp[(start+add):end] 
+              else:
+                  return tmp[(start+add):]              
+
+          def write_csv(file_name, data, flag = False): 
+              fieldnames = list(set(HEADERS))
+              if flag is False:
+                  file = open(get_file_path(file_name), 'a+', newline ='')
+                  writer = csv.DictWriter(file, fieldnames = fieldnames)
+                  with file: 
+                      writer.writerow(data)   
+              else:
+                  file = open(get_file_path(file_name), 'w', newline ='')
+                  writer = csv.DictWriter(file, fieldnames = fieldnames)
+                  with file: 
+                      writer.writeheader()
+                      writer.writerow(data)
+              upload(get_file_path(file_name),'{}/{}'.format(PREFIX,file_name))        
+
+          def get_file_path(file_name: str):
+              return os.path.join('/tmp', file_name)
+
+          def download(bucket_path, download_path, bucket_name=FIREHOSE):
+              s3 = boto3.client('s3')
+              s3.download_file('panther-firehose-cloudwatch-us-west-2', bucket_path, download_path)
+              return download_path
+
+          def upload(file_path, bucket_path, bucket_name=PANTHER):
+              client = boto3.client('s3')
+              client.upload_file(file_path, bucket_name, bucket_path)   
+
+          def deep_get(dictionary: dict, *keys, default=None):
+              return reduce(
+                  lambda d, key: d.get(key, default) if isinstance(d, Mapping) else default, keys, dictionary
+              ) 
+          def lambda_handler(event, context):
+              for item in event.get('Records'):
+                  bucket_path = deep_get(item, 's3', 'object', 'key')
+                  tmp = bucket_path.split('/')
+                  download_path = get_file_path(bucket_path.split('/')[len(tmp)-1])
+                  load(download(bucket_path, download_path))
+              return 200
+
+Outputs:
+  FirehoseBucket:
+    Description: Kinesis Firehose S3 Bucket
+    Value: !Ref FirehoseBucket
+  PantherBucket:
+    Description: Panther S3 Bucket
+    Value: !Ref PantherBucket
