@@ -42,12 +42,14 @@ func TestParseCloudTrailNotification(t *testing.T) {
 	notification := "{\"s3Bucket\": \"testbucket\", \"s3ObjectKey\": [\"key1\",\"key2\"]}"
 	expectedOutput := []*S3ObjectInfo{
 		{
-			S3Bucket:    "testbucket",
-			S3ObjectKey: "key1",
+			S3Bucket:     "testbucket",
+			S3ObjectKey:  "key1",
+			S3ObjectSize: -1,
 		},
 		{
-			S3Bucket:    "testbucket",
-			S3ObjectKey: "key2",
+			S3Bucket:     "testbucket",
+			S3ObjectKey:  "key2",
+			S3ObjectSize: -1,
 		},
 	}
 	s3Objects, err := ParseNotification(notification)

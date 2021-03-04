@@ -212,7 +212,6 @@ func (p *Processor) run(ctx context.Context, outputChan chan<- *parsers.Result) 
 			// s3 dim info
 			zap.String("bucket", p.input.S3Bucket),
 			zap.String("key", p.input.S3ObjectKey),
-			zap.Int64("size", p.input.S3ObjectSize),
 			zap.String("sourceID", p.input.Source.IntegrationID),
 		)
 	}()
