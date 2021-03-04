@@ -168,11 +168,11 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 	}
 
 	return &common.DataStream{
-		Stream:       stream,
-		Closer:       r,
-		Source:       src,
-		S3Bucket:     s3Object.S3Bucket,
-		S3ObjectKey:  s3Object.S3ObjectKey,
+		Stream:      stream,
+		Closer:      r,
+		Source:      src,
+		S3Bucket:    s3Object.S3Bucket,
+		S3ObjectKey: s3Object.S3ObjectKey,
 	}, nil
 }
 
@@ -290,8 +290,8 @@ type cloudTrailNotification struct {
 
 // S3ObjectInfo contains information about the S3 object
 type S3ObjectInfo struct {
-	S3Bucket     string
-	S3ObjectKey  string
+	S3Bucket    string
+	S3ObjectKey string
 	// In case the size is not known, this will have a negative value
 	S3ObjectSize int64
 }
