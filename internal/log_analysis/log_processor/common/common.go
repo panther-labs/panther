@@ -91,5 +91,4 @@ type DataStream struct {
 	Source       *models.SourceIntegration
 	S3ObjectKey  string
 	S3Bucket     string
-	S3ObjectSize int64
 }
