@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
@@ -452,8 +453,18 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 	storageDescriptor := *tableOutput.Table.StorageDescriptor // copy because we will mutate
 	storageDescriptor.Location = aws.String("s3://" + bucket + "/" + gm.PartitionPrefix(t))
 
-	_, err = CreatePartition(client, gm.databaseName, gm.tableName, gm.timebin.PartitionValuesFromTime(t),
-		&storageDescriptor, nil)
+	// FIXME: This can be removed in a few releases after 1.16 after everyone has upgraded.
+	// FIXME: Release 1.16 adds a new partition column to the tables in Glue.
+	// FIXME: The custom resource will run AFTER this lambda has been updated and run a sync to update all tables
+	partitionValues := gm.timebin.PartitionValuesFromTime(t)
+	if len(partitionValues) != len(tableOutput.Table.PartitionKeys) { // this means we have new code and old schema
+		// the last value is partition_time, take off to match old schema
+		partitionValues = partitionValues[0 : len(partitionValues)-1]
+		zap.L().Warn("creating backwards compatible partition", // log so we know then this is happening
+			zap.String("partition", t.String()))
+	}
+
+	_, err = CreatePartition(client, gm.databaseName, gm.tableName, partitionValues, &storageDescriptor, nil)
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
