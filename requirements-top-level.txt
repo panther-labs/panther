@@ -17,5 +17,5 @@ cfn-lint
 jsonpath-ng
 mypy
 pip~=21.0
-pylint
+pylint~=2.6
 yapf
