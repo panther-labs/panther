@@ -20,8 +20,10 @@ package datacatalog
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datalake/athena/athenaviews"
@@ -98,6 +100,14 @@ func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, log
 		// These actions should be part of an interface that manages the data lake backend.
 		// We need methods that use abstract Database/Table/Partition structs that can contain info for all backends.
 		if _, err := gluetables.CreateOrUpdateGlueTables(h.GlueClient, h.ProcessedDataBucket, table); err != nil {
+			// do not treat these as an error, table was updated but not all indexes created which is not a fatal error
+			// ResourceNumberLimitExceededException: Only 1 index can be created or deleted simultaneously per table
+			// nolint:lll
+			// ResourceNumberLimitExceededException: Max concurrent limit for indexing reached for catalog. Wait for indexes in CREATING to complete to create new index.
+			if strings.Contains(err.Error(), "ResourceNumberLimitExceededException") {
+				zap.L().Warn("failed to create index", zap.Error(err))
+				continue
+			}
 			return errors.Wrapf(err, "failed to create or update tables for log type %q", logType)
 		}
 	}
