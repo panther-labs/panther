@@ -27,9 +27,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/magefile/mage/sh"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/prompt"
@@ -140,8 +138,7 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 			return nil // override approved - don't need to keep checking each region
 		}
 
-		var notFound *s3Types.NotFound
-		if !errors.As(err, &notFound) {
+		if !strings.HasSuffix(err.Error(), "Not Found") {
 			// Some error other than 'not found'
 			return fmt.Errorf("failed to describe %s : %v", s3URL, err)
 		}
