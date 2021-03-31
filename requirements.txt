@@ -24,7 +24,7 @@ networkx==2.5
 pbr==5.5.1
 pip==21.0.1
 ply==3.11
-pylint==2.6.2
+pylint==2.7.0
 pyrsistent==0.17.3
 python-dateutil==2.8.1
 PyYAML==5.4.1
