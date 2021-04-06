@@ -7,10 +7,9 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.runpanther.io/quick-start">Quick Start</a> |
+  <a href="https://runpanther.io">Home</a> |
   <a href="https://docs.runpanther.io">Documentation</a> |
   <a href="https://blog.runpanther.io">Blog</a> |
-  <a href="https://boards.greenhouse.io/pantherlabs" alt="Panther on Greenhouse">Careers</a> |
 </p>
 
 <p align="center">
@@ -44,8 +43,6 @@ Security teams can use Panther for:
 ### Team
 
 We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprising security practitioners who have spent years building large-scale detection and response capabilities for companies such as Amazon and Airbnb. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a cloud-native solution for automated log analysis open-sourced by Airbnb.
-
-Want to help make Panther even better? <a href="https://boards.greenhouse.io/pantherlabs" alt="Panther on Greenhouse">We are hiring!</a>
 
 ### Why Panther?
 
