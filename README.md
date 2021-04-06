@@ -24,7 +24,7 @@
   Panther is a platform for detecting threats with log data, improving cloud security posture, and conducting investigations.
 </p>
 <p align="center">
-  This repository has been deprecated, please <a href="https://runpanther.io/request-a-demo/" alt="Request a Demo">request a demo</a> instead!
+  The Panther Community Edition repository has been deprecated. We've decided to focus on delivering our customers an excellent experience via our Panther SaaS offering. If you'd like to learn more about a free trial, <a href="https://runpanther.io/request-a-demo/" alt="Request a Demo">request a demo!</a>
 </p>
 
 ## Use Cases
