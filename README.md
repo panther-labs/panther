@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://runpanther.io">Home</a> |
   <a href="https://docs.runpanther.io">Documentation</a> |
-  <a href="https://blog.runpanther.io">Blog</a> |
+  <a href="https://blog.runpanther.io">Blog</a>
 </p>
 
 <p align="center">
