@@ -10,22 +10,22 @@
   <a href="https://docs.runpanther.io/quick-start">Quick Start</a> |
   <a href="https://docs.runpanther.io">Documentation</a> |
   <a href="https://blog.runpanther.io">Blog</a> |
-  <a href="https://angel.co/company/panther-labs/jobs" alt="Panther on AngelList">Careers</a> |
-  <a href="https://slack.runpanther.io/">Chat with us on Slack!</a>
+  <a href="https://boards.greenhouse.io/pantherlabs" alt="Panther on Greenhouse">Careers</a> |
 </p>
 
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 <a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-28-orange.svg?style=svg" alt="All Contributors"/></a>
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
-  <a href="https://panther-labs-oss-slackin.herokuapp.com/"><img src="https://panther-labs-oss-slackin.herokuapp.com/badge.svg" alt="Slack"/></a>
-  <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a>
   <a href="https://cla-assistant.io/panther-labs/panther"><img src="https://cla-assistant.io/readme/badge/panther-labs/panther" alt="CLA Assistant"/></a>
   <a href="https://magefile.org"><img src="https://magefile.org/badge.svg" alt="Built with Mage"/></a>
 </p>
 
 <p align="center">
   Panther is a platform for detecting threats with log data, improving cloud security posture, and conducting investigations.
+
+This repository has been deprecated, please <a href="https://runpanther.io/request-a-demo/" alt="Request a Demo">request a demo</a> instead!
+
 </p>
 
 ## Use Cases
@@ -39,101 +39,17 @@ Security teams can use Panther for:
 |      Searching IOCs      | Quickly search for matches against IOCs using standardized data fields                    |
 | Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices in code |
 
-## Deployment
-
-Follow our [Quick Start Guide](https://docs.runpanther.io/quick-start) to deploy Panther in your AWS account in a matter of minutes!
-
-Use our [Tutorials](https://github.com/panther-labs/tutorials) to learn about security logging and data ingestion.
-
-Panther uses Python for analysis, and each deployment is pre-installed with [150+ open source detections](https://github.com/panther-labs/panther-analysis).
-
-## Log Analysis
-
-Panther uses Python3 [rules](https://docs.runpanther.io/log-analysis/rules) to analyze logs from [popular security tools](https://docs.runpanther.io/log-analysis/supported-logs) such as [osquery](https://github.com/osquery/osquery) and [OSSEC](https://github.com/ossec/ossec-hids).
-
-The example below identifies malware on macOS with the `osx-attacks` query pack:
-
-```python
-from fnmatch import fnmatch
-
-APPROVED_PATHS = {'/System/*', '/usr/*', '/bin/*', '/sbin/*', '/var/*'}
-
-
-def rule(event):
-    if 'osx-attacks' not in event.get('name'):
-      return False
-
-    if event.get('action') != 'added':
-        return False
-
-    process_path = event.get('columns', {}).get('path')
-    # Send an alert if the process is running outside of any approved paths
-    return not any([fnmatch(process_path, p) for p in APPROVED_PATHS])
-
-
-def title(event):
-    # Show the query name that caused the alert
-    return 'Malware [{}] detected via osquery'.format(event.get('name'))
-
-
-def dedup(event):
-    # Group similar infections in the fleet
-    return event.get('name')
-```
-
-If this rule returns `True`, an alert will be dispatched to your team based on the defined severity.
-
-## Cloud Security
-
-Panther also supports analyzing cloud [resources](https://docs.runpanther.io/policies/resources) with [policies](https://docs.runpanther.io/policies/policies). This can be used to detect vulnerable infrastructure along with modeling security best practices:
-
-```python
-REGIONS_REQUIRED = {'us-east-1'}
-
-
-def policy(resource):
-    regions_enabled = [detector.split(':')[1] for detector in resource['Detectors']]
-    for region in REGIONS_REQUIRED:
-        if region not in regions_enabled:
-            return False
-
-    return True
-```
-
-Returning `True` means that a resource is compliant, and returning `False` will `Fail` the policy and trigger an alert.
-
-## Screenshots
-
-<img src="docs/img/rule-search-dark.PNG" alt="Rule Search"/>
-<p align="center"><i>Rule Search:</i> Show running detections</p>
-
-<img src="docs/img/rule-editor-dark.PNG" alt="Rule Editor"/>
-<p align="center"><i>Rule Editor:</i> Write and test Python detections in the UI</p>
-
-<img src="docs/img/alert-viewer-dark.PNG" alt="Alert Viewer"/>
-<p align="center"><i>Alert Viewer:</i> Triage generated alerts</p>
-
-<img src="docs/img/resource-viewer-dark.PNG" alt="Resource Viewer"/>
-<p align="center"><i>Resource Viewer:</i> View attributes and policy statuses</p>
-
-<img src="docs/img/compliance-overview-dark.PNG" alt="Cloud Security Overview"/>
-<p align="center"><i>Cloud Security:</i> Track and enforce resource compliance</p>
-
 ## About Us
 
 ### Team
 
 We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprising security practitioners who have spent years building large-scale detection and response capabilities for companies such as Amazon and Airbnb. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a cloud-native solution for automated log analysis open-sourced by Airbnb.
 
-Want to help make Panther even better? <a href="https://angel.co/company/panther-labs/jobs" alt="Panther on AngelList">We are hiring!</a>
+Want to help make Panther even better? <a href="https://boards.greenhouse.io/pantherlabs" alt="Panther on Greenhouse">We are hiring!</a>
 
 ### Why Panther?
 
 It's no longer feasible to find the needle in the security-log-haystack _manually_. Many teams struggle to use traditional SIEMs due to their high costs, overhead, and inability to scale. Panther was built from the ground up to leverage the elasticity of cloud services and provide a highly scalable, performant, and flexible security solution at a much lower cost.
-
-## Contributing
-
-We welcome all contributions! Please read our contributing [guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
 
 ## License
 
