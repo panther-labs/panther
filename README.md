@@ -22,9 +22,9 @@
 
 <p align="center">
   Panther is a platform for detecting threats with log data, improving cloud security posture, and conducting investigations.
-
-This repository has been deprecated, please <a href="https://runpanther.io/request-a-demo/" alt="Request a Demo">request a demo</a> instead!
-
+</p>
+<p align="center">
+  This repository has been deprecated, please <a href="https://runpanther.io/request-a-demo/" alt="Request a Demo">request a demo</a> instead!
 </p>
 
 ## Use Cases
